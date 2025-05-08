@@ -10,6 +10,15 @@ app.secret_key = 'tu_clave_secreta'
 UPLOAD_FOLDER = 'tmp'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.route('/archivos_tmp')
+def listar_archivos_tmp():
+    archivos = os.listdir('/tmp')
+    html = "<h2>Archivos en /tmp</h2><ul>"
+    for archivo in archivos:
+        html += f'<li><a href="/descargar/{archivo}">{archivo}</a></li>'
+    html += "</ul>"
+    return html
+
 @app.route('/guardar-pdf', methods=['POST'])
 def guardar_pdf():
     if 'pdf' not in request.files:
