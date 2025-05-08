@@ -1,4 +1,5 @@
 flask
+gunicorn
 pandas
 jinja2
 xhtml2pdf
