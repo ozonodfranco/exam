@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultado del Examen</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js "></script>
+  <style>
+    #boton_pdf {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    #boton_pdf:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<img id="logo-eaxm" src="{{ url_for('static', filename='img/Examen.webp') }}" alt="Logo" style="display:none;">
+<h2>Resultado del Examen</h2>
+<p><strong>Nombre:</strong> {{ datos.nombre }}</p>
+<p><strong>Correo:</strong> {{ datos.correo }}</p>
+<p><strong>Grado y Grupo:</strong> {{ datos.grado }} - {{ datos.grupo }}</p>
+<p><strong>Calificación:</strong> {{ calificacion }}/10</p>
+
+<button id="boton_pdf" onclick="generarPDF()">Descargar PDF</button>
+
+<hr>
+<ol id="resumen">
+{% for i in range(datos.preguntas | length) %}
+  <li>
+    <b>{{ datos.preguntas[i].pregunta }}</b><br>
+    Tu respuesta: {{ respuestas['pregunta_' + i|string] }}<br>
+    Correcta: {{ datos.preguntas[i].respuesta }}<br><br>
+  </li>
+{% endfor %}
+</ol>
+
+<script>
+async function generarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const imgElement = document.getElementById("logo-eaxm");
+
+  if (!imgElement.complete || imgElement.naturalHeight === 0) {
+    await new Promise(resolve => imgElement.onload = resolve);
+  }
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = imgElement.width;
+  canvas.height = imgElement.height;
+  ctx.drawImage(imgElement, 0, 0);
+  const imgData = canvas.toDataURL("image/webp");
+
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const imgHeight = 30;
+
+  function addHeader() {
+    doc.addImage(imgData, "WEBP", 0, 0, pdfWidth, imgHeight);
+  }
+
+  addHeader();
+  let y = imgHeight + 10;
+
+  doc.setFontSize(12);
+  doc.text("Resultado del Examen", 10, y); y += 10;
+  doc.text("Nombre: {{ datos.nombre }}", 10, y); y += 10;
+  doc.text("Correo: {{ datos.correo }}", 10, y); y += 10;
+  doc.text("Grado y Grupo: {{ datos.grado }} - {{ datos.grupo }}", 10, y); y += 10;
+  doc.text("Calificación: {{ calificacion }}/10", 10, y); y += 10;
+
+  y += 10;
+
+  const preguntas = document.querySelectorAll("#resumen li");
+  preguntas.forEach((li, index) => {
+    const texto = li.innerText.split('\n');
+    if (y > 270) {
+      doc.addPage();
+      addHeader();
+      y = imgHeight + 10;
+    }
+    doc.text(`${index + 1}. ${texto[0]}`, 10, y); y += 6;
+    doc.text(texto[1], 10, y); y += 6;
+    doc.text(texto[2], 10, y); y += 10;
+  });
+
+  // ✅ Guarda una copia local primero (para siempre tenerla)
+  const pdfBlobLocal = doc.output('blob');
+  const url = URL.createObjectURL(pdfBlobLocal);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'resultado_examen.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // ✅ Envía al servidor después de generar el PDF
+  const pdfBlobServer = doc.output('blob');
+
+  const formData = new FormData();
+  formData.append('pdf', pdfBlobServer, 'examen_{{ datos.nombre|replace(" ", "_") }}.pdf');
+
+  fetch('/guardar-pdf', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (response.ok) {
+      alert('✅ PDF guardado en el servidor');
+    } else {
+      alert('⚠️ El PDF no se guardó en el servidor, pero sí se descargó.');
+    }
+  })
+  .catch(error => {
+    console.error('Error al enviar el PDF al servidor:', error);
+    alert('⚠️ No se pudo guardar el PDF en el servidor, pero sí se descargó.');
+  });
+}
+</script>
+</body>
+</html>

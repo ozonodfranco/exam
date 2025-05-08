@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenido al Examen</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    .inactivo {
+      background-color: #ccc;
+      color: #666;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+	<!-- Mostrar imagen desde la carpeta estática -->
+  <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo">
+  <h1>Bienvenido al Examen</h1>
+  <p>Fecha actual: <span id="fecha-actual"></span></p>
+  <p>Examen disponible solo el <strong>8 de mayo de 2025, de 16:00 a 17:00</strong></p>
+
+  <button id="boton-examen">Ingresar al examen</button>
+
+  <script>
+    const fechaSpan = document.getElementById('fecha-actual');
+    const boton = document.getElementById('boton-examen');
+    const ahora = new Date();
+
+    // Mostrar fecha actual
+    fechaSpan.textContent = ahora.toLocaleString("es-MX", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+
+    // Rango permitido: 7 mayo 2025 entre 11:00 y 12:00 (mediodía)
+    const fechaPermitida = {
+      dia: 8,
+      mes: 4,  // mayo es 4
+      año: 2025,
+      horaInicio: 12,
+      minutoInicio: 0,
+      horaFin: 17,
+      minutoFin: 0
+    };
+
+    const enFecha = ahora.getFullYear() === fechaPermitida.año &&
+                    ahora.getMonth() === fechaPermitida.mes &&
+                    ahora.getDate() === fechaPermitida.dia;
+
+    const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
+    const minutosInicio = fechaPermitida.horaInicio * 60 + fechaPermitida.minutoInicio;
+    const minutosFin = fechaPermitida.horaFin * 60 + fechaPermitida.minutoFin;
+
+    const enHora = minutosActuales >= minutosInicio && minutosActuales <= minutosFin;
+
+    if (enFecha && enHora) {
+      boton.classList.remove("inactivo");
+      boton.addEventListener("click", () => {
+        window.location.href = "/formulario";
+      });
+    } else {
+      boton.classList.add("inactivo");
+      boton.addEventListener("click", () => {
+        alert("⚠️ Este examen solo está disponible el 8 de mayo de 2025 entre 16:00 y 17:00.");
+      });
+    }
+  </script>
+
+</body>
+</html>

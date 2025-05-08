@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examen</title></head>
+<body>
+	<div style="font-size: 1.2rem; font-weight: bold;">
+  Tiempo restante: <span id="temporizador">60:00</span>
+</div>
+
+
+
+<script>
+  let minutos = 60;
+  let segundos = 0;
+  let temporizador = document.getElementById('temporizador');
+
+  let intervalo = setInterval(() => {
+    if (segundos === 0) {
+      if (minutos === 0) {
+        clearInterval(intervalo);
+        document.getElementById('preguntas_re').submit();  // Autoenvío
+        return;
+      }
+      minutos--;
+      segundos = 59;
+    } else {
+      segundos--;
+    }
+
+    // Mostrar con formato 2 dígitos
+    temporizador.textContent =
+      (minutos < 10 ? '0' : '') + minutos + ':' +
+      (segundos < 10 ? '0' : '') + segundos;
+  }, 1000);
+</script>
+ <style>
+#boton_enviar {
+  padding: 10px 20px;
+  border: none;
+  background-color: #007BFF;
+  color: white;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#boton_enviar:hover {
+  background-color: #0056b3;
+}
+  </style>
+  <h2>Examen</h2>
+  <form id="preguntas_re" action="/resultado" method="POST">
+    {% for p in preguntas %}
+      <p><b>{{ loop.index }}. {{ p.pregunta }}</b></p>
+      
+      {% for opcion in p.opciones %}
+        <label>
+          <input type="radio" name="pregunta_{{ p.indice }}" value="{{ opcion }}" required>
+          {{ opcion }}
+        </label><br>
+      {% endfor %}
+      <br>
+    {% endfor %}
+    <input id="boton_enviar" type="submit" value="Enviar respuestas">
+  </form>
+</body>
+</html>
